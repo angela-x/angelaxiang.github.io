@@ -32,18 +32,6 @@ document.querySelectorAll('a[href^="#"]').forEach(anchor => {
 const navbar = document.querySelector('.navbar');
 let lastScroll = 0;
 
-window.addEventListener('scroll', () => {
-    const currentScroll = window.pageYOffset;
-    
-    if (currentScroll > 100) {
-        navbar.style.boxShadow = '0 4px 6px -1px rgba(0, 0, 0, 0.1)';
-    } else {
-        navbar.style.boxShadow = '0 1px 2px 0 rgba(0, 0, 0, 0.05)';
-    }
-    
-    lastScroll = currentScroll;
-});
-
 // Intersection Observer for fade-in animations
 const observerOptions = {
     threshold: 0.1,
@@ -71,22 +59,64 @@ document.querySelectorAll('.section').forEach(section => {
 const sections = document.querySelectorAll('.section');
 const navLinks = document.querySelectorAll('.nav-menu a');
 
-window.addEventListener('scroll', () => {
-    let current = '';
-    
-    sections.forEach(section => {
-        const sectionTop = section.offsetTop;
-        const sectionHeight = section.clientHeight;
-        if (window.pageYOffset >= sectionTop - 200) {
-            current = section.getAttribute('id');
-        }
-    });
+// Combined scroll event handler for better performance
+let ticking = false;
 
-    navLinks.forEach(link => {
-        link.classList.remove('active');
-        if (link.getAttribute('href') === `#${current}`) {
-            link.classList.add('active');
-        }
-    });
+window.addEventListener('scroll', () => {
+    if (!ticking) {
+        window.requestAnimationFrame(() => {
+            const currentScroll = window.pageYOffset;
+            
+            // Update navbar shadow
+            if (currentScroll > 100) {
+                navbar.style.boxShadow = '0 4px 6px -1px rgba(0, 0, 0, 0.1)';
+            } else {
+                navbar.style.boxShadow = '0 1px 2px 0 rgba(0, 0, 0, 0.05)';
+            }
+            
+            // Update active navigation item
+            // Find the section that is currently in view by checking bounds
+            let current = '';
+            const scrollOffset = 200; // Offset to trigger section change before reaching it
+            
+            // Iterate through sections to find which one contains the current scroll position
+            for (let i = 0; i < sections.length; i++) {
+                const section = sections[i];
+                const sectionTop = section.offsetTop;
+                const sectionHeight = section.offsetHeight;
+                const sectionBottom = sectionTop + sectionHeight;
+                
+                // Check if scroll position is within this section's bounds (with offset)
+                if (currentScroll >= sectionTop - scrollOffset && currentScroll < sectionBottom - scrollOffset) {
+                    current = section.getAttribute('id');
+                    break; // Found the active section, no need to check further
+                }
+            }
+
+            // If no section matches (e.g., at the very top or past last section), 
+            // find the closest section
+            if (!current && sections.length > 0) {
+                // If scrolled past all sections, use the last one
+                const lastSection = sections[sections.length - 1];
+                if (currentScroll >= lastSection.offsetTop - scrollOffset) {
+                    current = lastSection.getAttribute('id');
+                } else {
+                    // Otherwise use the first section
+                    current = sections[0].getAttribute('id');
+                }
+            }
+
+            navLinks.forEach(link => {
+                link.classList.remove('active');
+                if (link.getAttribute('href') === `#${current}`) {
+                    link.classList.add('active');
+                }
+            });
+            
+            lastScroll = currentScroll;
+            ticking = false;
+        });
+        ticking = true;
+    }
 });
 
