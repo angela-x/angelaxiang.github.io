@@ -79,32 +79,37 @@ window.addEventListener('scroll', () => {
             let current = '';
             const scrollOffset = 200; // Offset to trigger section change before reaching it
             
-            // Iterate through sections to find which one contains the current scroll position
-            for (let i = 0; i < sections.length; i++) {
-                const section = sections[i];
-                const sectionTop = section.offsetTop;
-                const sectionHeight = section.offsetHeight;
-                const sectionBottom = sectionTop + sectionHeight;
-                
-                // Check if scroll position is within this section's bounds (with offset)
-                if (currentScroll >= sectionTop - scrollOffset && currentScroll < sectionBottom - scrollOffset) {
-                    current = section.getAttribute('id');
-                    break; // Found the active section, no need to check further
+            // Get the hero section to check if we're still in it
+            const heroSection = document.getElementById('hero');
+            const heroBottom = heroSection ? heroSection.offsetTop + heroSection.offsetHeight : 0;
+            
+            // Only check sections if we've scrolled past the hero section
+            if (currentScroll >= heroBottom - scrollOffset) {
+                // Iterate through sections to find which one contains the current scroll position
+                for (let i = 0; i < sections.length; i++) {
+                    const section = sections[i];
+                    const sectionTop = section.offsetTop;
+                    const sectionHeight = section.offsetHeight;
+                    const sectionBottom = sectionTop + sectionHeight;
+                    
+                    // Check if scroll position is within this section's bounds (with offset)
+                    if (currentScroll >= sectionTop - scrollOffset && currentScroll < sectionBottom - scrollOffset) {
+                        current = section.getAttribute('id');
+                        break; // Found the active section, no need to check further
+                    }
                 }
-            }
 
-            // If no section matches (e.g., at the very top or past last section), 
-            // find the closest section
-            if (!current && sections.length > 0) {
-                // If scrolled past all sections, use the last one
-                const lastSection = sections[sections.length - 1];
-                if (currentScroll >= lastSection.offsetTop - scrollOffset) {
-                    current = lastSection.getAttribute('id');
-                } else {
-                    // Otherwise use the first section
-                    current = sections[0].getAttribute('id');
+                // If no section matches and we're past the hero, find the closest section
+                if (!current && sections.length > 0) {
+                    // If scrolled past all sections, use the last one
+                    const lastSection = sections[sections.length - 1];
+                    if (currentScroll >= lastSection.offsetTop - scrollOffset) {
+                        current = lastSection.getAttribute('id');
+                    }
                 }
             }
+            // If we're still in the hero section (currentScroll < heroBottom - scrollOffset),
+            // current remains empty, so no navigation item will be highlighted
 
             navLinks.forEach(link => {
                 link.classList.remove('active');
